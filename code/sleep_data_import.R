@@ -6,6 +6,7 @@ library(ggplot2)
 library(lubridate)
 
 folder <- "C:/Users/musta/Documents/MyFitbitData/MM/Sleep/"
+folder
 
 files <- list.files(folder, full.names = TRUE)
 #select all files that start with "sleep" and end with ".json"
