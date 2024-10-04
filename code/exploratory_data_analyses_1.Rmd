@@ -1,0 +1,137 @@
+---
+title: "EDA"
+author: "Mustapha Mustapha"
+date: "2024-10-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## My sleep data - part 2 Exploratory Data Analysis
+Prompt: What is exploratory data analysis?
+Exploratory data analysis (EDA) is an approach to analyzing data sets to summarize their main characteristics, often with visual methods. A statistical model can be used or not, but primarily EDA is for seeing what the data can tell us beyond the formal modeling or hypothesis testing task.
+
+# Steps in EDA
+1. Data Collection (done) - collected and imported sleep data from Fitbit and calculated sleep_hours - sum of daily sleep in hours
+2. Data Cleaning
+3. Data Preprocessing
+4. Data Exploration
+5. Data Visualization
+6. Data Modeling
+
+# Step 2: Data Cleaning
+Data cleaning is the process of detecting and correcting (or removing) corrupt or inaccurate records from a record set, table, or database and refers to identifying incomplete, incorrect, inaccurate or irrelevant parts of the data and then replacing, modifying, or deleting the dirty or coarse data.
+
+In this step, we will: detect outliers in sleep_hours variable
+
+```{r pressure, TRUE}
+#View(sleep_daily)
+str(sleep_daily)
+summary(sleep_daily)
+# sleep_daily$sleep_hours : num [1:721] 6.67 6.93 10.45 3.73 6.73 ...
+# remove outliers from sleep_hours >15 or sleep_hours < 3
+
+sleep_daily_clean <- sleep_daily[sleep_daily$sleep_hours < 16 & sleep_daily$sleep_hours > 2,]
+
+```
+### **Exploratory Analyses:**
+1. **Summary Statistics:** Calculate the mean, median, standard deviation, and range of daily sleep duration to understand the central tendency and variability.
+```{r summary_stats, TRUE}
+print(paste("Mean sleep hours (with outliers): ", round(mean(sleep_daily$sleep_hours), 2)))
+print(paste("Mean sleep hours (no outliers): ", round(mean(sleep_daily_clean$sleep_hours), 2)))
+print(paste("Median sleep hours (with outliers): ", round(median(sleep_daily$sleep_hours), 2)))
+print(paste("Median sleep hours (no outliers): ", round(median(sleep_daily_clean$sleep_hours), 2)))
+print(paste("SD of sleep hours (with outliers): ", round(sd(sleep_daily$sleep_hours), 2)))
+print(paste("SD of sleep hours (no outliers): ", round(sd(sleep_daily_clean$sleep_hours), 2)))
+print(paste("Range of sleep hours (with outliers): ", round(min(sleep_daily$sleep_hours), 2), 
+      ", ", round(max(sleep_daily$sleep_hours), 2)))
+print(paste("Range of sleep hours (no outliers): ", round(min(sleep_daily_clean$sleep_hours), 2),
+      ", ", round(max(sleep_daily_clean$sleep_hours), 2)))
+
+
+```
+
+## 2. **Sleep Distribution:** 
+Plot the distribution of daily sleep duration (e.g., histogram or kernel density estimate) to visualize the overall pattern.
+```{r sleep_distribution, TRUE}
+ggplot(sleep_daily_clean, aes(x = sleep_hours)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1, fill = "skyblue", color = "black", alpha = 0.7) +
+  geom_density() +
+  geom_vline(aes(xintercept = median_sleep), color = "red", linetype = "dashed", size = 1) +
+  labs(x = "Hours of Sleep", title = "Histogram and Density Plot of Daily Sleep Hours with Median Line") +
+  theme_minimal()
+
+```
+
+## 3. **Sleep Trends Over Time:** Create a time series plot of daily sleep duration to examine any trends or seasonality across the year.
+```{r sleep_trends, TRUE}
+ggplot(sleep_daily_clean, aes(x = date, y = sleep_hours)) +
+  geom_line(color = "skyblue") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 5), color = "red") +
+  labs(x = "Date", y = "Hours of Sleep", title = "Daily Sleep Duration Over Time") +
+  theme_minimal()
+
+ggplot(sleep_daily_clean %>% filter(date > "2024-01-01"), aes(x = date, y = sleep_hours)) +
+  geom_line(color = "skyblue") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 5), color = "red") +
+  labs(x = "Date (Jan-Sept 2024)", y = "Hours of Sleep", title = "Daily Sleep Duration Over Time") +
+  theme_minimal()
+```
+
+
+## 4. **Monthly Averages:** Calculate and plot the average sleep duration per month to observe any seasonal variations.
+
+```{r monthly_averages, TRUE}
+sleep_monthly <- sleep_daily_clean %>%
+  group_by(month) %>%
+  summarise(median_sleep_hours = round(median(sleep_hours, na.rm = TRUE), 2))
+sleep_monthly
+
+#add text indicating median on top of each bar
+#increase range of y axis to 10
+ggplot(sleep_monthly, aes(x = month, y = median_sleep_hours)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_text(aes(label = median_sleep_hours), vjust = -0.5, color = "black") +
+  labs(x = "Month", y = "Median Sleep Hours", title = "Monthly Median Sleep Duration") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+  ) +
+  ylim(0, 10)
+
+#make a christmas tree plot instead of bar chart
+
+ggplot(slee)
+
+```
+## 5. **Weekday vs. Weekend Sleep:** 
+Compare sleep duration between weekdays and weekends using boxplots or bar plots.
+```{r weekday_vs_weekend, TRUE}
+sleep_daily_clean <- sleep_daily_clean %>%
+  mutate(weekend = ifelse(week_day %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
+
+ggplot(sleep_daily_clean, aes(x = weekend, y = sleep_hours, fill = weekend)) +
+  geom_boxplot() +
+  labs(x = "Day Type", y = "Hours of Sleep", title = "Sleep Duration Comparison: Weekday vs. Weekend") +
+  theme_minimal()
+
+#plot the distribution of sleep hours for weekdays and weekends
+ggplot(sleep_daily_clean, aes(x = sleep_hours, fill = weekend)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1, alpha = 0.7, position = "identity") +
+  geom_density(alpha = 0.3) +
+  labs(x = "Hours of Sleep", title = "Sleep Duration Distribution: Weekday vs. Weekend") +
+  theme_minimal()
+
+```
+
+
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

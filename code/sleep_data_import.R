@@ -1,14 +1,19 @@
-library(tidyr)
-library(jsonlite)
-library(dplyr)
-library(purrr)
-library(ggplot2)
-library(lubridate)
+
+rm( list = ls())
+# load libraries
+preq = c( "ggpmisc", "gridExtra", "ggfortify", "scales", "jsonlite", "lubridate",
+          "readxl", "readr", "stats", "haven", "Matrix", "foreign", "zoo", 
+          "prophet", "corrr", "broom", "usethis", "rvest", "forecast", 
+          "seasonal", "purrr", "data.table", "fable", "fabletools", "ggplot2", 
+          "feasts", "tsibble", "tsibbledata", "tidyverse"
+)
+#for (y in preq) install.packages(y, dep = TRUE)
+sapply(preq, library, character.only=T)
 
 folder <- "C:/Users/musta/Documents/MyFitbitData/MM/Sleep/"
 folder
 
-files <- list.files(folder, full.names = TRUE)
+files <- list.files(folder, full.names = TRUE); files
 #select all files that start with "sleep" and end with ".json"
 sleep_files <- files[grep("^sleep.*\\.json$", basename(files), ignore.case = TRUE)]
 
@@ -59,7 +64,7 @@ sleep_daily <- sleep_data %>%
   ungroup() %>%
   mutate(week_day = weekdays(date),
          week_day = factor(week_day, levels = week_order),
-         month = month(date, label = TRUE, abbr = FALSE),
+         month = lubridate::month(date, label = TRUE, abbr = FALSE),
          month = factor(month, levels = month_order),
          sleep_hours = minutesAsleep_sum / 60,
          median_sleep = median(sleep_hours, na.rm = TRUE)
