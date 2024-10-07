@@ -39,16 +39,16 @@ sleep_daily_clean <- sleep_daily[sleep_daily$sleep_hours < 16 & sleep_daily$slee
 ### **Exploratory Analyses:**
 1. **Summary Statistics:** Calculate the mean, median, standard deviation, and range of daily sleep duration to understand the central tendency and variability.
 ```{r summary_stats, TRUE}
-print(paste("Mean sleep hours (with outliers): ", round(mean(sleep_daily$sleep_hours), 2)))
-print(paste("Mean sleep hours (no outliers): ", round(mean(sleep_daily_clean$sleep_hours), 2)))
-print(paste("Median sleep hours (with outliers): ", round(median(sleep_daily$sleep_hours), 2)))
-print(paste("Median sleep hours (no outliers): ", round(median(sleep_daily_clean$sleep_hours), 2)))
-print(paste("SD of sleep hours (with outliers): ", round(sd(sleep_daily$sleep_hours), 2)))
-print(paste("SD of sleep hours (no outliers): ", round(sd(sleep_daily_clean$sleep_hours), 2)))
-print(paste("Range of sleep hours (with outliers): ", round(min(sleep_daily$sleep_hours), 2), 
-      ", ", round(max(sleep_daily$sleep_hours), 2)))
-print(paste("Range of sleep hours (no outliers): ", round(min(sleep_daily_clean$sleep_hours), 2),
-      ", ", round(max(sleep_daily_clean$sleep_hours), 2)))
+cat("Mean sleep hours (with outliers): ", round(mean(sleep_daily$sleep_hours), 2), "\n")
+cat("Mean sleep hours (no outliers): ", round(mean(sleep_daily_clean$sleep_hours), 2), "\n")
+cat("Median sleep hours (with outliers): ", round(median(sleep_daily$sleep_hours), 2), "\n")
+cat("Median sleep hours (no outliers): ", round(median(sleep_daily_clean$sleep_hours), 2), "\n")
+cat("SD of sleep hours (with outliers): ", round(sd(sleep_daily$sleep_hours), 2), "\n")
+cat("SD of sleep hours (no outliers): ", round(sd(sleep_daily_clean$sleep_hours), 2), "\n")
+cat("Range of sleep hours (with outliers): ", round(min(sleep_daily$sleep_hours), 2), 
+      ", ", round(max(sleep_daily$sleep_hours), 2), "\n")
+cat("Range of sleep hours (no outliers): ", round(min(sleep_daily_clean$sleep_hours), 2),
+      ", ", round(max(sleep_daily_clean$sleep_hours), 2), "\n")
 
 
 ```
@@ -102,8 +102,20 @@ ggplot(sleep_monthly, aes(x = month, y = median_sleep_hours)) +
   ylim(0, 10)
 
 #make a christmas tree plot instead of bar chart
+ggplot(sleep_daily_clean %>% group_by(month), 
+       aes(x = month, y = sleep_hours)) +
+  geom_dotplot(binaxis = "y", stackdir = "center", fill = "skyblue", color = "black")
+  geom_text(aes(label = median_sleep), vjust = -0.5, color = "black") 
+    
 
-ggplot(slee)
+  geom_point(size = 3, color = "red") +
+  geom_segment(aes(xend = month, yend = 0), linetype = "dashed", color = "green") +
+  labs(x = "Month", y = "Median Sleep Hours", title = "Monthly Median Sleep Duration") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+  ) +
+  ylim(0, 10)
 
 ```
 ## 5. **Weekday vs. Weekend Sleep:** 

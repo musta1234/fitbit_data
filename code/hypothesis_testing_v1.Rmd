@@ -1,0 +1,88 @@
+---
+title: "hypothesis_testing"
+author: "Mustapha Mustapha"
+date: "2024-10-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Hypothesis testing
+H0: There is no significant difference in average sleep duration between weekdays and weekends.
+
+```{r Hypothesis_testing, echo=TRUE}
+# Load the data
+#str(sleep_daily_clean)
+# Perform the t-test
+t.test(sleep_daily_clean$sleep_hours ~ sleep_daily_clean$weekend)
+
+
+```
+# Interpretation
+The p-value is less than 0.05, we reject the null hypothesis that there is no significant difference in average sleep duration between weekdays and weekends. This means that there is a significant difference in average sleep duration between weekdays and weekends.
+
+#Assumptions of Welch 2-sample t-test
+The Welch independent samples t-test is a variation of the Student's t-test and is used when the assumption of equal variances between two groups is violated. Here are the assumptions of the Welch t-test:
+
+1. Independence of Observations: Each observation in both groups should be independent of the others. This means that the values in one group should not be related to the values in the other group, and there should be no repeated measures or matched pairs.
+
+2. Normality: The data in each group should be approximately normally distributed. However, the Welch t-test is robust to violations of normality when the sample sizes are large due to the Central Limit Theorem.
+
+3. Heterogeneity of Variances: Unlike the standard t-test, the Welch test does **not** assume that the variances of the two groups are equal. It adjusts the test statistic and degrees of freedom to account for different variances.
+
+4. Random Sampling: The data should be drawn from the population through random sampling to ensure the generalizability of the test results.
+
+If these assumptions are met or reasonably approximated, the Welch t-test is an appropriate method to compare the means of two independent groups.
+```{r test_for_independence, echo=FALSE}
+#How do you test for independence?
+# run durbin watson test for time series data
+# run Durbin-Watson test
+
+install.packages("car")
+library(car)
+
+durbinWatsonTest(sleep_daily_clean$sleep_hours)
+#[1] 0.1521385
+# interpretation: The Durbin-Watson test statistic =0.5 which is close to 0. This violates the assumption of independence required for the t-test. Durbin Watson statistic close to 4 = negative autocorrelation, close to 2 = no autocorrelation, close to 0 = positive autocorrelation
+
+durbinWatsonTest( 
+  lm(sleep_daily_clean$sleep_hours ~ sleep_daily_clean$weekend)
+)
+# interpretation: The Durbin-Watson test statistic =2.068313 which is close to 2. This indicates that there is no autocorrelation in the residuals of the model
+#(lm sleep_hours ~ weekend) to predict sleep hours based on whether it was a weekend, then applied the Durbin-Watson test to check for autocorrelation in the residuals of this model.
+
+#conclusion: 
+# our t-test results may be valid since there is no autocorrelation in the residuals of the model used to test for differences in sleep duration between weekdays and weekends.
+
+
+```
+## Test for normality
+```{r test_for_normality, echo=FALSE}
+#How do you test for normality?
+# run Shapiro-Wilk test for normality
+shapiro.test(
+  sleep_daily_clean$sleep_hours[sleep_daily_clean$weekend == "Weekday"]
+  )
+# p-value < 0.0001
+shapiro.test(
+  sleep_daily_clean$sleep_hours[sleep_daily_clean$weekend == "Weekend"]
+  )
+# p-value = 0.3675
+
+# interpretation: 
+#The p-value for the Shapiro-Wilk test is less than 0.05 for the weekday group, indicating that the data is not normally distributed. However, the p-value for the weekend group is greater than 0.05, suggesting that the data is normally distributed.
+# weekday data is likely heterogenous due to some holidays and vacation days, while the weekend data is more consistent.
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
