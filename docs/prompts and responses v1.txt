@@ -3,8 +3,7 @@ Can you suggest 10 exploratory analyses and ten testable hypotheses?
 
 
 ### **Exploratory Analyses:**
-1. **Summary Statistics:** Calculate the mean, median, standard deviation, and range of daily sleep duration to understand the central tendency and variability.
-
+1. **Summary Statistics:** Calculate the mean, median, standard deviation, and range of daily sleep duration to understand the central tendency and variability
 2. **Sleep Distribution:** Plot the distribution of daily sleep duration (e.g., histogram or kernel density estimate) to visualize the overall pattern.
 3. **Sleep Trends Over Time:** Create a time series plot of daily sleep duration to examine any trends or seasonality across the year.
 4. **Monthly Averages:** Calculate and plot the average sleep duration per month to observe any seasonal variations.

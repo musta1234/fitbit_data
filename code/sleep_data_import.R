@@ -5,8 +5,9 @@ preq = c( "ggpmisc", "gridExtra", "ggfortify", "scales", "jsonlite", "lubridate"
           "readxl", "readr", "stats", "haven", "Matrix", "foreign", "zoo", 
           "prophet", "corrr", "broom", "usethis", "rvest", "forecast", 
           "seasonal", "purrr", "data.table", "fable", "fabletools", "ggplot2", 
-          "feasts", "tsibble", "tsibbledata", "tidyverse"
-)
+          "feasts", "tsibble", "tsibbledata", "tidyverse", "car", "xts"
+          )
+
 #for (y in preq) install.packages(y, dep = TRUE)
 sapply(preq, library, character.only=T)
 

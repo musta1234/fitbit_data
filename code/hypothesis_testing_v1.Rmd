@@ -17,6 +17,16 @@ H0: There is no significant difference in average sleep duration between weekday
 #str(sleep_daily_clean)
 # Perform the t-test
 t.test(sleep_daily_clean$sleep_hours ~ sleep_daily_clean$weekend)
+#mean in group Weekday 6.8125
+#mean in group Weekend 7.0000
+# p < 0.0001
+
+#run Mann-Whitney U test
+wilcox.test(sleep_daily_clean$sleep_hours ~ sleep_daily_clean$weekend)
+# p < 0.0001
+
+# Interpretation
+#The p-value is less than 0.05, we reject the null hypothesis that there is no significant difference in average sleep duration between weekdays and weekends. This means that there is a significant difference in average sleep duration between weekdays and weekends.
 
 
 ```
@@ -35,12 +45,12 @@ The Welch independent samples t-test is a variation of the Student's t-test and 
 4. Random Sampling: The data should be drawn from the population through random sampling to ensure the generalizability of the test results.
 
 If these assumptions are met or reasonably approximated, the Welch t-test is an appropriate method to compare the means of two independent groups.
-```{r test_for_independence, echo=FALSE}
 #How do you test for independence?
 # run durbin watson test for time series data
 # run Durbin-Watson test
+```{r test_for_independence, echo=FALSE}
 
-install.packages("car")
+#install.packages("car")
 library(car)
 
 durbinWatsonTest(sleep_daily_clean$sleep_hours)
@@ -52,12 +62,12 @@ durbinWatsonTest(
 )
 # interpretation: The Durbin-Watson test statistic =2.068313 which is close to 2. This indicates that there is no autocorrelation in the residuals of the model
 #(lm sleep_hours ~ weekend) to predict sleep hours based on whether it was a weekend, then applied the Durbin-Watson test to check for autocorrelation in the residuals of this model.
+```
 
 #conclusion: 
 # our t-test results may be valid since there is no autocorrelation in the residuals of the model used to test for differences in sleep duration between weekdays and weekends.
 
 
-```
 ## Test for normality
 ```{r test_for_normality, echo=FALSE}
 #How do you test for normality?
@@ -69,20 +79,334 @@ shapiro.test(
 shapiro.test(
   sleep_daily_clean$sleep_hours[sleep_daily_clean$weekend == "Weekend"]
   )
-# p-value = 0.3675
+```
 
-# interpretation: 
-#The p-value for the Shapiro-Wilk test is less than 0.05 for the weekday group, indicating that the data is not normally distributed. However, the p-value for the weekend group is greater than 0.05, suggesting that the data is normally distributed.
+p-value = 0.3675
+
+#interpretation: 
+The p-value for the Shapiro-Wilk test is less than 0.05 for the weekday group, indicating that the data is not normally distributed. However, the p-value for the weekend group is greater than 0.05, suggesting that the data is normally distributed.
 # weekday data is likely heterogenous due to some holidays and vacation days, while the weekend data is more consistent.
 
+
+#Hypothesis #2: 
+H0: The average sleep duration does not significantly change across different months of the year.
+
+```{r Hypothesis_testing_2, echo=TRUE}
+# Perform the ANOVA test
+aov_results <- aov(sleep_hours ~ month, data = sleep_daily_clean)
+summary(aov_results)
+# p = 0.0174
+
+#perform kruskal wallis test
+kruskal.test(sleep_hours ~ month, data = sleep_daily_clean)
+# p = 0.01015
+
+```
+#Conclusion
+The p-value from the ANOVA test is less than 0.05, indicating that there is a significant difference in average sleep duration across different months of the year. Similarly, the p-value from the Kruskal-Wallis test is also less than 0.05, supporting the rejection of the null hypothesis. This suggests that the average sleep duration varies significantly across different months of the year.
+
+## Hypothesis #3: H0: There is no linear trend in sleep duration over the course of the year.
+
+```{r Hypothesis_testing_3, echo=TRUE}
+
+# Perform the linear regression
+lm_results <- lm(sleep_hours ~ date, data = sleep_daily_clean)
+summary(lm_results)
+#p-value (date) = 0.000259 
+#interpretation:
+
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+#check assumptions
+Linearity: The relationship between time and sleep duration should be approximately linear.
+Independence: Ensure residuals are independent (use the Durbin-Watson test to check for autocorrelation).
+Normality of Residuals: Residuals should be normally distributed (use Q-Q plots or tests like the Shapiro-Wilk test).
+Homoscedasticity: Residuals should have constant variance (check residual plots).
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+#Assumptions of Linear Regression
+```{r check_lm_assumptions, echo=TRUE}
+# check whether The relationship between time and sleep duration should be approximately linear.
+
+sleep_daily_clean %>%
+  ggplot(aes(x = date, y = sleep_hours)) + 
+  geom_point() +  # Scatter plot of data points
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Linear regression line
+  labs(title = "Sleep Duration vs Time",
+       x = "Time (Days/Weeks/Months of the Year)", 
+       y = "Sleep Duration (Hours)") +
+  theme_minimal()
+
+#use the Durbin-Watson test to check for autocorrelation
+durbinWatsonTest( 
+  lm(sleep_daily_clean$sleep_hours ~ sleep_daily_clean$date)
+)
+# p = 0.444
+```
+#Check normality of residuals
+
+```{r check_normality_resid, echo=TRUE}
+residuals <- residuals(lm_results)
+
+# Create a Q-Q plot
+qqnorm(residuals)  # Normal Q-Q plot
+qqline(residuals, col = "blue")  # Adds a reference line
+
+shapiro.test(residuals)
+# p < 0.0001
+# conclusion:
+#The p-value from the Shapiro-Wilk test is less than 0.05, indicating that the residuals are not normally distributed. This violates the assumption of normality of residuals in linear regression
+
+# Check the variance of Residuals and test for should have constant variance (check residual plots).
+
+# Create a plot of residuals vs. fitted values
+ggplot(data = sleep_daily_clean, aes(x = date, y = residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Residuals vs Fitted Values",
+       x = "Time (Days/Weeks/Months of the Year)", 
+       y = "Residuals") +
+  theme_minimal()
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#Conclusion
+The relationship between time and sleep duration appears to be approximately linear based on the scatter plot and linear regression line. The Durbin-Watson test indicates no autocorrelation in the residuals of the linear regression model. However, the residuals are not normally distributed according to the Shapiro-Wilk test, violating the assumption of normality. The plot of residuals vs. fitted values shows some heteroscedasticity, indicating that the variance of residuals is not constant. These violations of the assumptions suggest that the linear regression model may not be the best fit for the data.
+
+#Additional Analysis
+#If the assumptions of the linear regression model are not met, consider using alternative models such as generalized linear models, time series models, or non-parametric regression methods.
+
+# Alternative Approach #1 polynomial regression
+```{r polynomial_regression, echo=TRUE}
+# Fit a polynomial regression model
+poly_lm_results <- 
+  lm(sleep_hours ~ poly(date, 2), data = sleep_daily_clean)
+
+summary(poly_lm_results)
+#p-value (date) = 0.000259
+#extract fitted values from poly_lm_results
+fitted_values_poly <- predict(poly_lm_results)
+#plot observed vs fitted values for poly_lm_results
+plot(fitted_values_poly, sleep_daily_clean$sleep_hours)
+hist(residuals(poly_lm_results))
+
+# Check the assumptions of the polynomial regression model
+ggplot(data = sleep_daily_clean, aes(x = date, y = sleep_hours)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Observed vs Fitted Values",
+       x = "Time (Days/Weeks/Months of the Year)", 
+       y = "Sleep Duration (Hours)") +
+  theme_minimal()
+
+ggplot(data = sleep_daily_clean, aes(x = date, y = sleep_hours)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Observed vs Fitted Values",
+       x = "Time (Days/Weeks/Months of the Year)", 
+       y = "Sleep Duration (Hours)") +
+  theme_minimal()
+
+```
+# Model diagnostics for ploynomial regression
+```{r model_diagnostics, echo=TRUE}
+diagnostics <- augment(poly_lm_results)
+
+# Check for normality of residuals
+ggplot(diagnostics, aes(x = .resid)) +
+  geom_histogram(bins = 30, fill = "blue", alpha = 0.7) +
+  labs(title = "Residuals Histogram", x = "Residuals", y = "Count") +
+  theme_minimal()
+
+# Check for homoscedasticity
+ggplot(diagnostics, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted", x = "Fitted Values", y = "Residuals") +
+  theme_minimal()
+
+# Check for influential points using Cook's distance
+ggplot(diagnostics, aes(x = seq_along(.resid), y = .cooksd)) +
+  geom_point() +
+  labs(title = "Cook's Distance", x = "Observation Index", y = "Cook's Distance") +
+  theme_minimal()
+
+# QQ plot for normality
+ggplot(diagnostics, aes(sample = .resid)) +
+  geom_qq() +
+  geom_qq_line() +
+  labs(title = "QQ Plot", x = "Theoretical Quantiles", y = "Sample Quantiles") +
+  theme_minimal()
+
+#compare correct AIC values (AICc) for linear and polynomial models
+
+
+AIC(lm_results)
+AIC(poly_lm_results)
+
+```
+# Conclusion
+The polynomial regression model provides a better fit to the data compared to the linear regression model, as indicated by the lower AIC value and improved R-squared value. The residuals of the polynomial regression model appear to be normally distributed based on the histogram and Q-Q plot. The residuals also exhibit homoscedasticity, with no clear pattern in the residuals vs. fitted values plot. There are no influential points based on Cook's distance. Overall, the polynomial regression model meets the assumptions of normality, linearity, and homoscedasticity, making it a suitable model for predicting sleep duration over time.
+
+
+
+#Alternative Approach #2: Time Series Analysis
+```{r time_series_analysis, echo=TRUE}
+#which day of the year is 	"2022-04-29"?
+first_day = as.Date(min(sleep_daily_clean$date)) %>% yday()
+first_year = as.Date(min(sleep_daily_clean$date)) %>% year()
+
+# Convert date to time series object
+
+## Step 1: Complete missing dates
+sleep_daily_complete <- 
+  sleep_daily_clean %>%
+  complete(date = seq.Date(min(date), max(date), by = "day"))
+
+median_sleep_hours <- median(sleep_daily_complete$sleep_hours, na.rm = TRUE)
+random_noise <- rnorm(sum(is.na(sleep_daily_complete$sleep_hours)), mean = 0, sd = 0.5)
+
+sleep_daily_complete <- 
+  sleep_daily_complete %>%
+  mutate(sleep_hours = ifelse(is.na(sleep_hours), median_sleep_hours + random_noise, sleep_hours))
+
+
+# Step 2: Convert to xts object (time series)
+sleep_ts_complete <- 
+  ts(sleep_daily_complete$sleep_hours,
+     frequency=365, start = c(first_year, first_day)) # Assuming daily frequency
+
+# Step 3: Decompose the time series
+sleep_decomposed <- 
+  stl(sleep_ts_complete, t.window=13, s.window="periodic", robust=TRUE)
+
+# Step 4: Plot the decomposed time series
+autoplot(sleep_decomposed) +
+  labs(title = "Decomposition of Sleep Duration Time Series")
+
+# Step 5: Check for seasonality
+autoplot(sleep_ts_complete) +
+  labs(title = "Seasonal Plot of Sleep Duration Time Series")
+
+# Step 6: Check for autocorrelation
+Acf(sleep_ts_complete, lag.max = 90)  
+
+# Step 7: Fit an ARIMA model
+auto.arima(sleep_ts_complete)
+arima(sleep_ts_complete, order = c(1, 1, 1))
+
+# Step 8: test whether there is a significant time trend in your sleep_ts_complete time series using ARIMA models with and without differencing
+
+
+# Fit ARIMA model without differencing (d = 0)
+arima_no_trend <- Arima(sleep_ts_complete, order = c(1, 0, 1))
+
+# Fit ARIMA model with differencing (d = 1), which removes a linear trend
+arima_with_trend <- Arima(sleep_ts_complete, order = c(1, 1, 1))
+
+# Compare the AIC values to assess model fit
+AIC(arima_no_trend)
+AIC(arima_with_trend)
+
+# Perform a likelihood ratio test to compare the two models
+# (Only valid if one model is nested within the other, as here)
+lr_test <- 2 * (logLik(arima_with_trend) - logLik(arima_no_trend))
+p_value <- pchisq(lr_test, df = 1, lower.tail = FALSE)
+
+# Display the p-value from the likelihood ratio test
+p_value
+
+#p < 0.0001 
+#interpretation: The p-value from the likelihood ratio test is less than 0.05, 
+#indicating that the ARIMA model with differencing (d = 1) is a significantly 
+#better fit than the ARIMA model without differencing (d = 0). 
+#This suggests that there is a significant time trend in the sleep duration time series.
+
+
+# plot the fitted values from the ARIMA models
+autoplot(sleep_ts_complete, series = "Observed",
+         color = "gray"  #make this line gray
+         
+         ) +
+  autolayer(fitted(arima_no_trend), series = "ARIMA model, no time trend") +
+  autolayer(fitted(arima_with_trend), series = "ARIMA model + time trend") +
+  labs(title = "Fitted Values from ARIMA Models") +
+  xlab("Date") +
+  ylab("Sleep Duration (Hours)") +
+  theme_minimal()
+
+
+
+```
+# Conclusion
+The time series analysis of the sleep duration data reveals a significant time trend in the sleep duration over the course of the year. The decomposition of the time series shows a clear seasonal pattern, with sleep duration varying throughout the year. The autocorrelation function (ACF) plot indicates a strong autocorrelation at lag 7, suggesting a weekly pattern in the data. The ARIMA model with differencing (d = 1) is a significantly better fit than the ARIMA model without differencing (d = 0), indicating the presence of a time trend in the sleep duration time series. The fitted values from the ARIMA models capture the observed sleep duration data well, providing a useful model for predicting future sleep duration based on the time trend.
+
+## Hypothesis #4: 
+H0: Individuals get, on average, at least 7 hours of sleep per night.
+
+```{r Hypothesis_testing_4, echo=TRUE}
+# Perform a one-sample t-test
+t.test(sleep_daily_clean$sleep_hours, mu = 7, alternative = "less")
+# p = 1.000
+```
+#Conclusion
+The p-value from the one-sample t-test is greater than 0.05, indicating that there is not enough evidence to reject the null hypothesis that individuals get, on average, at least 7 hours of sleep per night. This suggests that the average sleep duration is not significantly less than 7 hours per night.
+
+## Hypothesis #5: 
+H0: There is no significant difference in sleep duration between summer and winter months
+
+```{r Hypothesis_testing_5, echo=TRUE}
+# Create a binary variable for summer and winter months
+sleep_daily_clean <- 
+  sleep_daily_clean <- sleep_daily_clean %>%
+  mutate(season = case_when(
+    month(date) %in% c(6, 7, 8) ~ "Summer",   # June, July, August
+    month(date) %in% c(12, 1, 2) ~ "Winter",   # December, January, February
+    TRUE ~ NA_character_                         # Other months will be NA
+  )) %>%
+  mutate(season_binary = case_when(
+    season == "Summer" ~ 1,
+    season == "Winter" ~ 0,
+    TRUE ~ NA_real_  # NA for other months
+  ))
+
+# Display the modified dataframe
+head(sleep_daily_clean)
+
+# Perform a two-sample t-test
+t.test(sleep_daily_clean$sleep_hours ~ sleep_daily_clean$season_binary)
+
+#p-value = 0.1072
+
+```
+#Conclusion
+The p-value from the two-sample t-test comparing sleep duration between summer and winter months is greater than 0.05, indicating that there is not enough evidence to reject the null hypothesis. This suggests that there is no significant difference in sleep duration between summer and winter months.
+
+## Summary of Hypothesis Testing Results
+## Hypothesis #1:
+H0: There is no significant difference in average sleep duration between weekdays and weekends.
+Welch 2-sample t-test, p-value < 0.0001
+Conclusion: This suggests that there is a significant difference in average sleep duration between weekdays and weekends.
+
+## Hypothesis #2:
+H0: The average sleep duration does not significantly change across different months of the year.
+ANOVA test, p-value = 0.0174
+Krsukal-Wallis test, p-value = 0.01015
+Conclusion: This suggests that there is a significant difference in average sleep duration across different months of the year.
+
+## Hypothesis #3:
+H0: There is no linear trend in sleep duration over the course of the year.
+Linear regression, p-value = 0.000259
+Polynomial regression, p-value = 0.000229
+ARIMA model, p-value < 0.0001
+Conclusion: This suggests that there is a significant linear trend in sleep duration over the course of the year.
+
+## Hypothesis #4:
+H0: I get, on average, at least 7 hours of sleep per night.
+One-sample t-test, p-value = 1.000
+Conclusion: This suggests that, on average, I get at least 7 hours of sleep per night.
+
+## Hypothesis #5: 
+H0: There is no significant difference in sleep duration between summer and winter months
+Welch 2 sample t-test, p-value = 0.1072
+Conclusion: This suggests that there is no significant difference in sleep duration between summer and winter months.
